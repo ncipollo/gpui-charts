@@ -16,7 +16,10 @@ pub mod graph;
 pub mod plot;
 pub mod point;
 
-pub use axes::Axes;
+pub use axes::horizontal::HorizontalAxis;
+pub use axes::label::evenly_spaced_labels;
+pub use axes::vertical::VerticalAxis;
+pub use axes::{Axes, AxisLabel, AxisStyle};
 pub use builder::{AxesBuilder, GraphBuilder};
 pub use graph::Graph;
 pub use plot::bar::BarPlot;

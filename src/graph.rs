@@ -31,11 +31,12 @@ impl Graph {
         &self.axes
     }
 
-    /// Paints every plot, in order, into `area`.
+    /// Paints the axes and then every plot, in order, within `bounds`.
     ///
-    /// Axis layout is added in a follow-up; for now the whole element bounds
-    /// are used as the plot area.
-    fn paint(&self, area: Bounds<Pixels>, window: &mut Window, cx: &mut App) {
+    /// The axes reserve their gutters first; plots draw into what remains.
+    fn paint(&self, bounds: Bounds<Pixels>, window: &mut Window, cx: &mut App) {
+        let area = self.axes.plot_area(bounds);
+        self.axes.paint(area, window, cx);
         for plot in &self.plots {
             plot.paint(area, window, cx);
         }
