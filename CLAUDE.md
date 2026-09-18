@@ -4,7 +4,13 @@
 
 A chart component library for gpui:
 
-- `src/lib.rs` — Library root; chart components live here as modules, each implementing `Render`.
+- `src/lib.rs` — Library root; re-exports the public API and holds the crate docs.
+- `src/graph.rs` — `Graph`, the gpui element (`RenderOnce`/`IntoElement`) that lays out axes and paints plots from a `canvas`.
+- `src/plot.rs` + `src/plot/` — The object-safe `Plot` trait, normalized-to-pixel mapping helpers, and the concrete plots (points, line, bar).
+- `src/axes.rs` + `src/axes/` — `Axes`, the horizontal/vertical axes, labels, style, and text painting.
+- `src/builder.rs` + `src/builder/` — Raw builders that take normalized `0..=1` coordinates and validate them into `ChartError`.
+- `src/series.rs` + `src/series/` — Friendly builders (time series, weekday, numeric x) that normalize real values and generate labels.
+- `src/point.rs`, `src/error.rs` — `NormalizedPoint` and `ChartError`.
 - `src/bin/demo.rs` — A demo app that opens a window for visually testing components during development. No library logic lives here — it just exercises the library.
 
 ## After Each Change
