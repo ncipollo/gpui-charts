@@ -2,14 +2,9 @@
 
 Chart components for [gpui](https://www.gpui.rs/), Zed's GPU-accelerated UI framework.
 
-## Requirements
-
-- Stable Rust (edition 2024)
-- macOS with Xcode installed and selected (`sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer`) — gpui renders with Metal
-
 ## Usage
 
-`Graph` is a gpui element: build one and drop it into any layout.
+`Graph` is a gpui element. You can build one via one of the provided builders then drop it in a layout.
 
 ```rust
 use gpui::{div, prelude::*};
@@ -25,30 +20,70 @@ let graph = TimeSeriesBuilder::new()
 div().size_full().child(graph)
 ```
 
-Three friendly builders normalize real-world values and label the axes for
-you: `TimeSeriesBuilder`, `WeekdayBuilder`, and `NumericSeriesBuilder`. When
-you already have coordinates in the `0..=1` range, the raw `GraphBuilder`,
-`AxesBuilder`, and per-plot builders (`PointsPlotBuilder`, `LinePlotBuilder`,
-`BarPlotBuilder`) take them directly.
+## Plots
+
+A graph paints one or more plots in the order they're added, so they can be
+layered (points over a line, for instance).
+
+- **PointsPlot**: A circular point at each sample. Use it alone for a scatter chart or over a line to emphasize the samples.
+- **LinePlot**: A simple line through all provided samples
+- **BarPlot**: A vertical bar plot for each sample.
+
+## Builders
+
+Three series builders normalize real-world values and label the axes for you:
+
+- **TimeSeriesBuilder**: Plots `(timestamp, value)` samples over a period. Labels default to `YYYY-MM-DD` in UTC and take a custom formatter.
+- **WeekdayBuilder**: Plots values into seven evenly spaced weekday buckets. Days without a value are left empty.
+- **NumericSeriesBuilder**: Plots `(x, y)` samples where `x` is any numeric quantity. Both axes are normalized and labeled from the observed or fixed ranges.
+
+When you already have coordinates in the `0..=1` range, the raw builders take
+them directly:
+
+- **GraphBuilder**: Assembles a `Graph` from plots and axes.
+- **AxesBuilder**: Builds the axes from labels at normalized positions.
+- **PointsPlotBuilder**, **LinePlotBuilder**, **BarPlotBuilder**: Build a single plot from normalized points.
 
 ### Scrubbing
 
-Any plot can be scrubbed with the pointer. Turn it on per plot with
-`ScrubOptions::hover()` or `ScrubOptions::press_and_hold()`, optionally hiding
-the value with `with_show_value(false)`. The guide line, point ring, and value
-text can each be hidden or recolored (`with_guide`, `with_point_color`, and so
-on). Give the graph an id so it can keep
-its own state, or pass an `Entity<ScrubState>` via `scrub_state` and observe
-it to display the scrubbed value anywhere in your app.
+Any plot can be scrubbed with the pointer. Scrubbing is off until you give the
+plot a `ScrubOptions`, which starts from one of two triggers and can then be
+tuned with the following options:
+
+```rust
+use gpui::rgb;
+use gpui_charts::{ScrubOptions, TimeSeriesBuilder};
+
+// Highlight the nearest sample whenever the pointer is over the graph.
+let scrub = ScrubOptions::hover()
+    // Draw the sample's value above the highlighted point.
+    .with_show_value(true)
+    .with_value_color(rgb(0xfafafa))
+    // Draw a vertical guide line through the sample.
+    .with_guide(true)
+    .with_guide_color(rgb(0x52525b))
+    // Draw a ring around the sample's point.
+    .with_point(true)
+    .with_point_color(rgb(0x60a5fa));
+
+let graph = TimeSeriesBuilder::new()
+    .samples(samples)
+    .scrub(scrub)
+    .build()?;
+
+// Or highlight only while the primary mouse button is held down.
+let scrub = ScrubOptions::press_and_hold();
+```
 
 ## Demo
 
-    cargo run --bin demo
+To see a live demo you can run the following:
+```bash
+cargo run --bin demo
+```
 
-Opens a window for visually testing chart components as they're built.
+## Examples
 
-## Develop
+For more examples, please see [examples.rs](src/bin/demo/examples.rs).
 
-    cargo fmt
-    cargo test
-    cargo clippy
+![gpui-charts demo](img/gpui-charts.png)
