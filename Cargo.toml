@@ -1,0 +1,18 @@
+[package]
+name = "gpui-charts"
+description = "Chart components for gpui"
+edition = "2024"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/ncipollo/gpui-charts"
+version = "0.1.0"
+
+[dependencies]
+gpui = "0.2.2"
+serde = { version = "1.0.229", features = ["derive"] }
+thiserror = "2.0.19"
+
+[lints.clippy]
+cognitive_complexity = "warn"
+too_many_lines = "warn"
+too_many_arguments = "warn"
