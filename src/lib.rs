@@ -12,6 +12,7 @@
 
 pub mod axes;
 pub mod builder;
+pub mod error;
 pub mod graph;
 pub mod plot;
 pub mod point;
@@ -20,7 +21,8 @@ pub use axes::horizontal::HorizontalAxis;
 pub use axes::label::evenly_spaced_labels;
 pub use axes::vertical::VerticalAxis;
 pub use axes::{Axes, AxisLabel, AxisStyle};
-pub use builder::{AxesBuilder, GraphBuilder};
+pub use builder::{AxesBuilder, BarPlotBuilder, GraphBuilder, LinePlotBuilder, PointsPlotBuilder};
+pub use error::ChartError;
 pub use graph::Graph;
 pub use plot::bar::BarPlot;
 pub use plot::line::LinePlot;

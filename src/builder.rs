@@ -1,79 +1,72 @@
 //! Builders for assembling graphs, axes, and plots.
 //!
-//! The raw builders in this module accept normalized coordinates directly.
-//! Friendlier builders that accept timestamps or categories are layered on top
-//! of these in a follow-up.
+//! The raw builders in this module accept normalized coordinates directly and
+//! validate that every value lies in `0.0..=1.0`. Friendlier builders that
+//! accept timestamps or categories are layered on top of these.
 
-use crate::axes::Axes;
-use crate::graph::Graph;
-use crate::plot::Plot;
+pub mod axes;
+pub mod graph;
+pub mod plot;
 
-/// Builds an [`Axes`] value from label series at normalized positions.
-#[derive(Debug, Default)]
-pub struct AxesBuilder {}
+pub use axes::AxesBuilder;
+pub use graph::GraphBuilder;
+pub use plot::{BarPlotBuilder, LinePlotBuilder, PointsPlotBuilder};
 
-impl AxesBuilder {
-    /// Creates an empty axes builder.
-    pub fn new() -> Self {
-        Self::default()
-    }
+use crate::error::ChartError;
+use crate::point::NormalizedPoint;
 
-    /// Finishes building the axes.
-    pub fn build(self) -> Axes {
-        Axes::default()
+/// Returns the first out-of-range point as an error.
+pub(crate) fn validate_points(points: &[NormalizedPoint]) -> Result<(), ChartError> {
+    match points.iter().enumerate().find(|(_, p)| !p.is_in_range()) {
+        Some((index, point)) => Err(ChartError::PointOutOfRange {
+            index,
+            point: *point,
+        }),
+        None => Ok(()),
     }
 }
 
-/// Builds a [`Graph`] from plots and axes.
-#[derive(Default)]
-pub struct GraphBuilder {
-    plots: Vec<Box<dyn Plot>>,
-    axes: Axes,
-}
-
-impl GraphBuilder {
-    /// Creates an empty graph builder.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Appends a plot; plots draw in the order they are added.
-    pub fn plot(mut self, plot: impl Plot + 'static) -> Self {
-        self.plots.push(Box::new(plot));
-        self
-    }
-
-    /// Sets the axes drawn around the plot area.
-    pub fn axes(mut self, axes: Axes) -> Self {
-        self.axes = axes;
-        self
-    }
-
-    /// Finishes building the graph.
-    pub fn build(self) -> Graph {
-        Graph::new(self.plots, self.axes)
+/// Returns an error if any point has a smaller `x` than its predecessor.
+pub(crate) fn validate_sorted(points: &[NormalizedPoint]) -> Result<(), ChartError> {
+    match points.windows(2).position(|pair| pair[1].x < pair[0].x) {
+        Some(i) => Err(ChartError::UnsortedPoints { index: i + 1 }),
+        None => Ok(()),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use gpui::{App, Bounds, Pixels, Window};
+    use super::{validate_points, validate_sorted};
+    use crate::error::ChartError;
+    use crate::point::NormalizedPoint;
 
-    use super::{AxesBuilder, GraphBuilder};
-    use crate::plot::Plot;
-
-    struct NoopPlot;
-    impl Plot for NoopPlot {
-        fn paint(&self, _area: Bounds<Pixels>, _window: &mut Window, _cx: &mut App) {}
+    #[test]
+    fn reports_first_out_of_range_point() {
+        let points = vec![
+            NormalizedPoint::new(0.1, 0.1),
+            NormalizedPoint::new(1.5, 0.1),
+            NormalizedPoint::new(2.0, 0.1),
+        ];
+        assert_eq!(
+            validate_points(&points),
+            Err(ChartError::PointOutOfRange {
+                index: 1,
+                point: NormalizedPoint::new(1.5, 0.1)
+            })
+        );
     }
 
     #[test]
-    fn graph_builder_collects_plots_in_order() {
-        let graph = GraphBuilder::new()
-            .plot(NoopPlot)
-            .plot(NoopPlot)
-            .axes(AxesBuilder::new().build())
-            .build();
-        assert_eq!(graph.plots().len(), 2);
+    fn reports_first_unsorted_point() {
+        let points = vec![
+            NormalizedPoint::new(0.1, 0.1),
+            NormalizedPoint::new(0.5, 0.1),
+            NormalizedPoint::new(0.4, 0.1),
+        ];
+        assert_eq!(
+            validate_sorted(&points),
+            Err(ChartError::UnsortedPoints { index: 2 })
+        );
+        assert_eq!(validate_sorted(&points[..2]), Ok(()));
     }
 }
