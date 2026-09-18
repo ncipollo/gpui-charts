@@ -57,11 +57,15 @@ impl GraphBuilder {
 
 #[cfg(test)]
 mod tests {
+    use gpui::{App, Bounds, Pixels, Window};
+
     use super::{AxesBuilder, GraphBuilder};
     use crate::plot::Plot;
 
     struct NoopPlot;
-    impl Plot for NoopPlot {}
+    impl Plot for NoopPlot {
+        fn paint(&self, _area: Bounds<Pixels>, _window: &mut Window, _cx: &mut App) {}
+    }
 
     #[test]
     fn graph_builder_collects_plots_in_order() {
