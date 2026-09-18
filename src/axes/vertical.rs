@@ -38,18 +38,25 @@ impl VerticalAxis {
         &self.style
     }
 
-    /// Paints the baseline, ticks, and labels left of `plot_area`.
-    pub fn paint(&self, plot_area: Bounds<Pixels>, window: &mut Window, cx: &mut App) {
-        let baseline_x = plot_area.left() - px(1.0);
+    /// Paints the baseline along the left of `frame`, with ticks and labels
+    /// lined up to normalized positions inside `area`.
+    pub fn paint(
+        &self,
+        frame: Bounds<Pixels>,
+        area: Bounds<Pixels>,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        let baseline_x = frame.left() - px(1.0);
         let baseline = Bounds::new(
-            point(baseline_x, plot_area.top()),
-            size(px(1.0), plot_area.size.height),
+            point(baseline_x, frame.top()),
+            size(px(1.0), frame.size.height),
         );
         window.paint_quad(fill(baseline, self.style.line_color));
 
         let tick_length = self.style.tick_length;
         for label in &self.labels {
-            let y = map_y(plot_area, label.position);
+            let y = map_y(area, label.position);
             let tick = Bounds::new(
                 point(baseline_x - tick_length, y),
                 size(tick_length, px(1.0)),

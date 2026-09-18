@@ -1,6 +1,6 @@
 //! Axis styling and the shared text painting helper.
 
-use gpui::{App, Hsla, Pixels, Point, SharedString, TextRun, Window, hsla, point, px};
+use gpui::{App, Hsla, Pixels, Point, ShapedLine, SharedString, TextRun, Window, hsla, point, px};
 
 /// Visual settings shared by both axes.
 #[derive(Clone, Debug, PartialEq)]
@@ -69,6 +69,25 @@ pub enum TextAnchor {
     MiddleRight,
 }
 
+/// Returns the painted width of `text` in `style`.
+pub fn measure_label(text: &SharedString, style: &AxisStyle, window: &Window) -> Pixels {
+    shape(text, style, window).width
+}
+
+fn shape(text: &SharedString, style: &AxisStyle, window: &Window) -> ShapedLine {
+    let run = TextRun {
+        len: text.len(),
+        font: window.text_style().font(),
+        color: style.text_color,
+        background_color: None,
+        underline: None,
+        strikethrough: None,
+    };
+    window
+        .text_system()
+        .shape_line(text.clone(), style.font_size, &[run], None)
+}
+
 /// Paints a single line of text anchored at `anchor`.
 pub fn paint_label(
     text: &SharedString,
@@ -78,17 +97,7 @@ pub fn paint_label(
     window: &mut Window,
     cx: &mut App,
 ) {
-    let run = TextRun {
-        len: text.len(),
-        font: window.text_style().font(),
-        color: style.text_color,
-        background_color: None,
-        underline: None,
-        strikethrough: None,
-    };
-    let line = window
-        .text_system()
-        .shape_line(text.clone(), style.font_size, &[run], None);
+    let line = shape(text, style, window);
     let line_height = style.line_height();
     let origin = match placement {
         TextAnchor::TopCenter => point(anchor.x - line.width / 2.0, anchor.y),

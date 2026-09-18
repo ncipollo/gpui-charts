@@ -38,18 +38,25 @@ impl HorizontalAxis {
         &self.style
     }
 
-    /// Paints the baseline, ticks, and labels below `plot_area`.
-    pub fn paint(&self, plot_area: Bounds<Pixels>, window: &mut Window, cx: &mut App) {
-        let baseline_y = plot_area.bottom();
+    /// Paints the baseline along the bottom of `frame`, with ticks and labels
+    /// lined up to normalized positions inside `area`.
+    pub fn paint(
+        &self,
+        frame: Bounds<Pixels>,
+        area: Bounds<Pixels>,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        let baseline_y = frame.bottom();
         let baseline = Bounds::new(
-            point(plot_area.left(), baseline_y),
-            size(plot_area.size.width, px(1.0)),
+            point(frame.left(), baseline_y),
+            size(frame.size.width, px(1.0)),
         );
         window.paint_quad(fill(baseline, self.style.line_color));
 
         let tick_length = self.style.tick_length;
         for label in &self.labels {
-            let x = map_x(plot_area, label.position);
+            let x = map_x(area, label.position);
             let tick = Bounds::new(point(x, baseline_y), size(px(1.0), tick_length));
             window.paint_quad(fill(tick, self.style.line_color));
             let anchor = point(x, baseline_y + tick_length + px(2.0));

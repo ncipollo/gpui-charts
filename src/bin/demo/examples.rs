@@ -171,8 +171,6 @@ fn numeric() -> Graph {
             let x = f64::from(i) * 2.5;
             (x, (x * 0.35).powi(2))
         }))
-        .x_axis(ValueAxis::default().label_count(4))
-        .y_axis(ValueAxis::default().label_count(4))
         .plot_kind(PlotKind::Line)
         .color(orange())
         .build()

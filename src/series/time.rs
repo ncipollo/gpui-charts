@@ -98,7 +98,10 @@ impl TimeSeriesBuilder {
     pub fn build(mut self) -> Result<Graph, ChartError> {
         self.samples.sort_by_key(|s| s.0);
         let format = self.x_formatter.clone();
+        // Time labels spread evenly across the exact period; rounding seconds
+        // to "nice" numbers would not land on meaningful instants.
         let mut x_axis = ValueAxis::default()
+            .nice_ticks(false)
             .label_count(self.x_label_count)
             .formatter(move |v| format(v.round() as i64));
         if let Some((start, end)) = self.period {
