@@ -6,6 +6,11 @@
 //!
 //! [`Graph`]: crate::Graph
 
+pub mod bar;
+pub mod line;
+pub mod points;
+pub mod style;
+
 use gpui::{App, Bounds, Pixels, Point, Window, point};
 
 use crate::point::NormalizedPoint;
