@@ -19,5 +19,8 @@ pub mod point;
 pub use axes::Axes;
 pub use builder::{AxesBuilder, GraphBuilder};
 pub use graph::Graph;
+pub use plot::bar::BarPlot;
+pub use plot::line::LinePlot;
+pub use plot::points::PointsPlot;
 pub use plot::{Plot, map_point, map_x, map_y};
 pub use point::NormalizedPoint;
