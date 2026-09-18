@@ -13,7 +13,8 @@ struct DemoRoot;
 
 impl Render for DemoRoot {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        let graph = GraphBuilder::new().axes(AxesBuilder::new().build()).build();
+        let axes = AxesBuilder::new().build().expect("valid axes");
+        let graph = GraphBuilder::new().axes(axes).build();
         div().size_full().child(graph)
     }
 }
