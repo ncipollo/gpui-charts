@@ -11,7 +11,7 @@ A chart component library for gpui:
 - `src/builder.rs` + `src/builder/` — Raw builders that take normalized `0..=1` coordinates and validate them into `ChartError`.
 - `src/series.rs` + `src/series/` — Friendly builders (time series, weekday, numeric x) that normalize real values and generate labels.
 - `src/point.rs`, `src/error.rs` — `NormalizedPoint` and `ChartError`.
-- `src/bin/demo.rs` — A demo app that opens a window for visually testing components during development. No library logic lives here — it just exercises the library.
+- `src/bin/demo/main.rs` + `src/bin/demo/examples.rs` — A demo app that opens a window for visually testing components during development. No library logic lives here — it just exercises the library.
 
 ## After Each Change
 Run the following commands after every code change and fix any issues before considering the change complete:
