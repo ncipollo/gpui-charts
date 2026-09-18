@@ -7,6 +7,7 @@ use crate::builder::graph::GraphBuilder;
 use crate::error::ChartError;
 use crate::graph::Graph;
 use crate::point::NormalizedPoint;
+use crate::scrub::ScrubOptions;
 use crate::series::axis::ValueAxis;
 use crate::series::plots::{PlotKind, SeriesStyle};
 
@@ -132,6 +133,13 @@ impl WeekdayBuilder {
         self
     }
 
+    /// Sets the scrubber configuration for every plot in the series. Scrubbed
+    /// values are labelled with the `y` axis formatter.
+    pub fn scrub(mut self, scrub: ScrubOptions) -> Self {
+        self.style.scrub = scrub;
+        self
+    }
+
     /// Normalizes the values and builds the graph.
     pub fn build(mut self) -> Result<Graph, ChartError> {
         self.values
@@ -156,6 +164,12 @@ impl WeekdayBuilder {
             .vertical_labels(y_labels)
             .build()?;
         self.style.bar_width.get_or_insert(0.6 / 7.0);
+        self.style.labels = self
+            .values
+            .iter()
+            .map(|v| self.y_axis.format(v.1))
+            .map(Into::into)
+            .collect();
         let mut graph = GraphBuilder::new().axes(axes);
         for plot in self.style.build_plots(&points, PlotKind::Bar)? {
             graph = graph.plot_boxed(plot);

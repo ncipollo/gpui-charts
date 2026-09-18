@@ -5,6 +5,8 @@ use gpui::{App, Bounds, Corners, Hsla, Pixels, Window, fill, px};
 use crate::plot::style::default_color;
 use crate::plot::{Plot, map_point};
 use crate::point::NormalizedPoint;
+use crate::scrub::{ScrubOptions, ScrubSample, nearest, paint_highlight};
+use gpui::SharedString;
 
 /// Draws a circular marker at each normalized point.
 ///
@@ -17,6 +19,8 @@ pub struct PointsPlot {
     points: Vec<NormalizedPoint>,
     color: Hsla,
     radius: Pixels,
+    labels: Vec<SharedString>,
+    scrub: ScrubOptions,
 }
 
 impl PointsPlot {
@@ -26,6 +30,8 @@ impl PointsPlot {
             points,
             color: default_color(),
             radius: px(4.0),
+            labels: Vec::new(),
+            scrub: ScrubOptions::default(),
         }
     }
 
@@ -38,6 +44,21 @@ impl PointsPlot {
     /// Sets the marker radius.
     pub fn with_radius(mut self, radius: Pixels) -> Self {
         self.radius = radius;
+        self
+    }
+
+    /// Sets a value label per point, shown when scrubbing.
+    pub fn with_labels(
+        mut self,
+        labels: impl IntoIterator<Item = impl Into<SharedString>>,
+    ) -> Self {
+        self.labels = labels.into_iter().map(Into::into).collect();
+        self
+    }
+
+    /// Sets the scrubber configuration.
+    pub fn with_scrub(mut self, scrub: ScrubOptions) -> Self {
+        self.scrub = scrub;
         self
     }
 
@@ -57,5 +78,23 @@ impl Plot for PointsPlot {
             quad.corner_radii = Corners::all(self.radius);
             window.paint_quad(quad);
         }
+    }
+
+    fn scrub_options(&self) -> ScrubOptions {
+        self.scrub
+    }
+
+    fn scrub(&self, x: f32) -> Option<ScrubSample> {
+        nearest(&self.points, &self.labels, x)
+    }
+
+    fn paint_scrub(
+        &self,
+        area: Bounds<Pixels>,
+        sample: &ScrubSample,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        paint_highlight(area, sample, self.color, &self.scrub, window, cx);
     }
 }

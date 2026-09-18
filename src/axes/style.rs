@@ -1,6 +1,8 @@
-//! Axis styling and the shared text painting helper.
+//! Axis styling.
 
-use gpui::{App, Hsla, Pixels, Point, ShapedLine, SharedString, TextRun, Window, hsla, point, px};
+use gpui::{Hsla, Pixels, SharedString, Window, hsla, px};
+
+use crate::text::{LabelStyle, measure_text};
 
 /// Visual settings shared by both axes.
 #[derive(Clone, Debug, PartialEq)]
@@ -19,10 +21,11 @@ pub struct AxisStyle {
 
 impl Default for AxisStyle {
     fn default() -> Self {
+        let text = LabelStyle::default();
         Self {
             line_color: hsla(0.0, 0.0, 0.6, 1.0),
-            text_color: hsla(0.0, 0.0, 0.75, 1.0),
-            font_size: px(11.0),
+            text_color: text.color,
+            font_size: text.font_size,
             tick_length: px(4.0),
             gutter: px(36.0),
         }
@@ -56,53 +59,19 @@ impl AxisStyle {
 
     /// The line height used when painting labels.
     pub fn line_height(&self) -> Pixels {
-        self.font_size * 1.3
+        self.label_style().line_height()
+    }
+
+    /// The text style used for this axis's labels.
+    pub fn label_style(&self) -> LabelStyle {
+        LabelStyle {
+            color: self.text_color,
+            font_size: self.font_size,
+        }
     }
 }
 
-/// Where a label sits relative to its anchor point.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum TextAnchor {
-    /// The anchor is the top-center of the text (used below a horizontal axis).
-    TopCenter,
-    /// The anchor is the middle-right of the text (used left of a vertical axis).
-    MiddleRight,
-}
-
-/// Returns the painted width of `text` in `style`.
+/// Returns the painted width of an axis label in `style`.
 pub fn measure_label(text: &SharedString, style: &AxisStyle, window: &Window) -> Pixels {
-    shape(text, style, window).width
-}
-
-fn shape(text: &SharedString, style: &AxisStyle, window: &Window) -> ShapedLine {
-    let run = TextRun {
-        len: text.len(),
-        font: window.text_style().font(),
-        color: style.text_color,
-        background_color: None,
-        underline: None,
-        strikethrough: None,
-    };
-    window
-        .text_system()
-        .shape_line(text.clone(), style.font_size, &[run], None)
-}
-
-/// Paints a single line of text anchored at `anchor`.
-pub fn paint_label(
-    text: &SharedString,
-    anchor: Point<Pixels>,
-    placement: TextAnchor,
-    style: &AxisStyle,
-    window: &mut Window,
-    cx: &mut App,
-) {
-    let line = shape(text, style, window);
-    let line_height = style.line_height();
-    let origin = match placement {
-        TextAnchor::TopCenter => point(anchor.x - line.width / 2.0, anchor.y),
-        TextAnchor::MiddleRight => point(anchor.x - line.width, anchor.y - line_height / 2.0),
-    };
-    // Painting only fails for malformed layouts; a missing label is not fatal.
-    let _ = line.paint(origin, line_height, window, cx);
+    measure_text(text, &style.label_style(), window)
 }

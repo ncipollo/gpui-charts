@@ -10,6 +10,8 @@ A chart component library for gpui:
 - `src/axes.rs` + `src/axes/` — `Axes`, the horizontal/vertical axes, labels, style, and text painting.
 - `src/builder.rs` + `src/builder/` — Raw builders that take normalized `0..=1` coordinates and validate them into `ChartError`.
 - `src/series.rs` + `src/series/` — Friendly builders (time series, weekday, numeric x) that normalize real values and generate labels.
+- `src/scrub.rs` — Scrubber options, results, the observable `ScrubState` entity, nearest-sample lookup, aggregation, and the default highlight painter. `Graph` registers the mouse listeners.
+- `src/text.rs` — Shared single-line text measurement and painting (`LabelStyle`, `TextAnchor`).
 - `src/point.rs`, `src/error.rs` — `NormalizedPoint` and `ChartError`.
 - `src/bin/demo/main.rs` + `src/bin/demo/examples.rs` — A demo app that opens a window for visually testing components during development. No library logic lives here — it just exercises the library.
 

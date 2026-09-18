@@ -7,6 +7,7 @@ use crate::builder::graph::GraphBuilder;
 use crate::error::ChartError;
 use crate::graph::Graph;
 use crate::point::NormalizedPoint;
+use crate::scrub::ScrubOptions;
 use crate::series::axis::ValueAxis;
 use crate::series::plots::{PlotKind, SeriesStyle};
 
@@ -64,6 +65,13 @@ impl NumericSeriesBuilder {
         self
     }
 
+    /// Sets the scrubber configuration for every plot in the series. Scrubbed
+    /// values are labelled with the `y` axis formatter.
+    pub fn scrub(mut self, scrub: ScrubOptions) -> Self {
+        self.style.scrub = scrub;
+        self
+    }
+
     /// Normalizes the samples and builds the graph.
     pub fn build(mut self) -> Result<Graph, ChartError> {
         self.samples.sort_by(|a, b| a.0.total_cmp(&b.0));
@@ -78,6 +86,12 @@ impl NumericSeriesBuilder {
             .horizontal_labels(x_labels)
             .vertical_labels(y_labels)
             .build()?;
+        self.style.labels = self
+            .samples
+            .iter()
+            .map(|s| self.y_axis.format(s.1))
+            .map(Into::into)
+            .collect();
         let mut graph = GraphBuilder::new().axes(axes);
         for plot in self.style.build_plots(&points, PlotKind::Line)? {
             graph = graph.plot_boxed(plot);
