@@ -74,6 +74,16 @@ pub fn all(scrub: &Entity<ScrubState>) -> Vec<Example> {
         },
         Example::new("Day of week", "hover to scrub", weekday()),
         Example::new("Numeric x axis", "no scrubber", numeric()),
+        Example::new(
+            "Scatter, guide line only",
+            "hover: line, no ring or value",
+            scatter_guide_only(),
+        ),
+        Example::new(
+            "Line, point only",
+            "hover: ring, no line or value",
+            line_point_only(),
+        ),
     ]
 }
 
@@ -130,6 +140,45 @@ fn line() -> Graph {
         .build()
         .expect("static points are in range");
     GraphBuilder::new().plot(line).axes(percent_axes()).build()
+}
+
+fn scatter_guide_only() -> Graph {
+    let points = PointsPlotBuilder::new()
+        .points(scatter_points())
+        .color(blue())
+        .radius(px(5.0))
+        .scrub(
+            ScrubOptions::hover()
+                .with_point(false)
+                .with_show_value(false)
+                .with_guide_color(orange()),
+        )
+        .build()
+        .expect("static points are in range");
+    GraphBuilder::new()
+        .plot(points)
+        .axes(percent_axes())
+        .id("scatter-guide")
+        .build()
+}
+
+fn line_point_only() -> Graph {
+    let line = LinePlotBuilder::new()
+        .points(wave_points())
+        .color(orange())
+        .scrub(
+            ScrubOptions::hover()
+                .with_guide(false)
+                .with_show_value(false)
+                .with_point_color(white()),
+        )
+        .build()
+        .expect("static points are in range");
+    GraphBuilder::new()
+        .plot(line)
+        .axes(percent_axes())
+        .id("line-point")
+        .build()
 }
 
 fn line_with_points() -> Graph {
