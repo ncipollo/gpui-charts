@@ -3,8 +3,9 @@
 use gpui::{App, Bounds, Pixels, Window, fill, point, px, size};
 
 use crate::axes::label::AxisLabel;
-use crate::axes::style::{AxisStyle, TextAnchor, paint_label};
+use crate::axes::style::AxisStyle;
 use crate::plot::map_x;
+use crate::text::{TextAnchor, paint_text};
 
 /// An axis drawn along the bottom edge of the plot area.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -60,11 +61,11 @@ impl HorizontalAxis {
             let tick = Bounds::new(point(x, baseline_y), size(px(1.0), tick_length));
             window.paint_quad(fill(tick, self.style.line_color));
             let anchor = point(x, baseline_y + tick_length + px(2.0));
-            paint_label(
+            paint_text(
                 &label.text,
                 anchor,
                 TextAnchor::TopCenter,
-                &self.style,
+                &self.style.label_style(),
                 window,
                 cx,
             );

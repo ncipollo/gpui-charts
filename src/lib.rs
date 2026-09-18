@@ -27,6 +27,28 @@
 //! - [`WeekdayBuilder`] for one value per [`Weekday`].
 //! - [`NumericSeriesBuilder`] for `(x, y)` samples on a non-time `x` axis.
 //!
+//! # Scrubbing
+//!
+//! Plots opt into pointer-driven inspection with [`ScrubOptions`] (on/off, a
+//! [`ScrubTrigger`] of hover or press-and-hold, and whether the value is drawn
+//! above the point). The graph aggregates the nearest sample from every
+//! enabled plot into a [`ScrubState`] entity: pass your own with
+//! `GraphBuilder::scrub_state` and observe it to show values elsewhere, or
+//! give the graph an id and it keeps its own state.
+//!
+//! ```
+//! use gpui_charts::{PlotKind, ScrubOptions, TimeSeriesBuilder};
+//!
+//! let graph = TimeSeriesBuilder::new()
+//!     .samples([(1_700_000_000, 3.0), (1_700_086_400, 5.5)])
+//!     .plot_kind(PlotKind::Line)
+//!     .scrub(ScrubOptions::hover())
+//!     .build()
+//!     .expect("samples are valid")
+//!     .with_id("revenue");
+//! assert!(graph.is_scrubbable());
+//! ```
+//!
 //! # Example
 //!
 //! ```
@@ -68,7 +90,9 @@ pub mod error;
 pub mod graph;
 pub mod plot;
 pub mod point;
+pub mod scrub;
 pub mod series;
+pub mod text;
 
 pub use axes::horizontal::HorizontalAxis;
 pub use axes::label::evenly_spaced_labels;
@@ -82,9 +106,11 @@ pub use plot::line::LinePlot;
 pub use plot::points::PointsPlot;
 pub use plot::{Plot, map_point, map_x, map_y};
 pub use point::NormalizedPoint;
+pub use scrub::{ScrubOptions, ScrubResult, ScrubSample, ScrubState, ScrubTrigger};
 pub use series::axis::format_value;
 pub use series::time::format_date;
 pub use series::{
     Normalizer, NumericSeriesBuilder, PlotKind, TimeSeriesBuilder, ValueAxis, Weekday,
     WeekdayBuilder,
 };
+pub use text::{LabelStyle, TextAnchor};

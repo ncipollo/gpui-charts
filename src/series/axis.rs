@@ -74,6 +74,11 @@ impl ValueAxis {
         self
     }
 
+    /// Formats a value with this axis's formatter.
+    pub fn format(&self, value: f64) -> String {
+        (self.formatter)(value)
+    }
+
     /// Resolves the normalizer and labels for this axis given observed values.
     ///
     /// When no range was fixed and there are no values, the range `0..=1` is

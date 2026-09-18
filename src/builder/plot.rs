@@ -1,6 +1,6 @@
 //! Builders for the concrete plot types.
 
-use gpui::{Hsla, Pixels};
+use gpui::{Hsla, Pixels, SharedString};
 
 use crate::builder::{validate_points, validate_sorted};
 use crate::error::ChartError;
@@ -8,10 +8,13 @@ use crate::plot::bar::BarPlot;
 use crate::plot::line::LinePlot;
 use crate::plot::points::PointsPlot;
 use crate::point::NormalizedPoint;
+use crate::scrub::ScrubOptions;
 
 /// Builds a [`PointsPlot`] from normalized coordinates.
 #[derive(Debug, Default)]
 pub struct PointsPlotBuilder {
+    labels: Vec<SharedString>,
+    scrub: ScrubOptions,
     points: Vec<NormalizedPoint>,
     color: Option<Hsla>,
     radius: Option<Pixels>,
@@ -47,10 +50,24 @@ impl PointsPlotBuilder {
         self
     }
 
+    /// Sets a value label per point, shown when scrubbing.
+    pub fn labels(mut self, labels: impl IntoIterator<Item = impl Into<SharedString>>) -> Self {
+        self.labels = labels.into_iter().map(Into::into).collect();
+        self
+    }
+
+    /// Sets the scrubber configuration.
+    pub fn scrub(mut self, scrub: ScrubOptions) -> Self {
+        self.scrub = scrub;
+        self
+    }
+
     /// Validates the points and builds the plot.
     pub fn build(self) -> Result<PointsPlot, ChartError> {
         validate_points(&self.points)?;
-        let mut plot = PointsPlot::new(self.points);
+        let mut plot = PointsPlot::new(self.points)
+            .with_labels(self.labels)
+            .with_scrub(self.scrub);
         if let Some(color) = self.color {
             plot = plot.with_color(color);
         }
@@ -64,6 +81,8 @@ impl PointsPlotBuilder {
 /// Builds a [`LinePlot`] from normalized coordinates sorted by `x`.
 #[derive(Debug, Default)]
 pub struct LinePlotBuilder {
+    labels: Vec<SharedString>,
+    scrub: ScrubOptions,
     points: Vec<NormalizedPoint>,
     color: Option<Hsla>,
     stroke_width: Option<Pixels>,
@@ -99,11 +118,25 @@ impl LinePlotBuilder {
         self
     }
 
+    /// Sets a value label per point, shown when scrubbing.
+    pub fn labels(mut self, labels: impl IntoIterator<Item = impl Into<SharedString>>) -> Self {
+        self.labels = labels.into_iter().map(Into::into).collect();
+        self
+    }
+
+    /// Sets the scrubber configuration.
+    pub fn scrub(mut self, scrub: ScrubOptions) -> Self {
+        self.scrub = scrub;
+        self
+    }
+
     /// Validates the points (range and `x` ordering) and builds the plot.
     pub fn build(self) -> Result<LinePlot, ChartError> {
         validate_points(&self.points)?;
         validate_sorted(&self.points)?;
-        let mut plot = LinePlot::new(self.points);
+        let mut plot = LinePlot::new(self.points)
+            .with_labels(self.labels)
+            .with_scrub(self.scrub);
         if let Some(color) = self.color {
             plot = plot.with_color(color);
         }
@@ -117,6 +150,8 @@ impl LinePlotBuilder {
 /// Builds a [`BarPlot`] from normalized `(x, height)` pairs.
 #[derive(Debug, Default)]
 pub struct BarPlotBuilder {
+    labels: Vec<SharedString>,
+    scrub: ScrubOptions,
     bars: Vec<NormalizedPoint>,
     color: Option<Hsla>,
     width: Option<f32>,
@@ -152,10 +187,24 @@ impl BarPlotBuilder {
         self
     }
 
+    /// Sets a value label per bar, shown when scrubbing.
+    pub fn labels(mut self, labels: impl IntoIterator<Item = impl Into<SharedString>>) -> Self {
+        self.labels = labels.into_iter().map(Into::into).collect();
+        self
+    }
+
+    /// Sets the scrubber configuration.
+    pub fn scrub(mut self, scrub: ScrubOptions) -> Self {
+        self.scrub = scrub;
+        self
+    }
+
     /// Validates the bars and builds the plot.
     pub fn build(self) -> Result<BarPlot, ChartError> {
         validate_points(&self.bars)?;
-        let mut plot = BarPlot::new(self.bars);
+        let mut plot = BarPlot::new(self.bars)
+            .with_labels(self.labels)
+            .with_scrub(self.scrub);
         if let Some(color) = self.color {
             plot = plot.with_color(color);
         }
@@ -170,7 +219,9 @@ impl BarPlotBuilder {
 mod tests {
     use super::{BarPlotBuilder, LinePlotBuilder, PointsPlotBuilder};
     use crate::error::ChartError;
+    use crate::plot::Plot;
     use crate::point::NormalizedPoint;
+    use crate::scrub::ScrubOptions;
 
     #[test]
     fn points_builder_collects_points() {
@@ -205,6 +256,19 @@ mod tests {
             .build()
             .unwrap_err();
         assert_eq!(err, ChartError::UnsortedPoints { index: 1 });
+    }
+
+    #[test]
+    fn builders_carry_labels_and_scrub_options() {
+        let plot = PointsPlotBuilder::new()
+            .point(0.5, 0.25)
+            .labels(["25 units"])
+            .scrub(ScrubOptions::hover())
+            .build()
+            .expect("valid points");
+        assert!(plot.scrub_options().enabled);
+        let sample = plot.scrub(0.5).expect("one point");
+        assert_eq!(sample.label.as_ref(), "25 units");
     }
 
     #[test]

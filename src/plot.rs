@@ -13,7 +13,9 @@ pub mod style;
 
 use gpui::{App, Bounds, Pixels, Point, Window, point};
 
+use crate::plot::style::default_color;
 use crate::point::NormalizedPoint;
+use crate::scrub::{ScrubOptions, ScrubSample, paint_highlight};
 
 /// A drawable layer of a graph.
 ///
@@ -27,6 +29,31 @@ use crate::point::NormalizedPoint;
 pub trait Plot {
     /// Paints this plot into `area`.
     fn paint(&self, area: Bounds<Pixels>, window: &mut Window, cx: &mut App);
+
+    /// This plot's scrubber configuration. Scrubbing is off by default.
+    fn scrub_options(&self) -> ScrubOptions {
+        ScrubOptions::default()
+    }
+
+    /// Returns the sample nearest normalized `x`, or `None` when this plot has
+    /// nothing to scrub. The graph only calls this when
+    /// [`Plot::scrub_options`] says the scrubber is triggered.
+    fn scrub(&self, _x: f32) -> Option<ScrubSample> {
+        None
+    }
+
+    /// Paints the highlight for a scrubbed sample. The default draws a guide
+    /// line, a ring around the point, and the value when `show_value` is set.
+    fn paint_scrub(
+        &self,
+        area: Bounds<Pixels>,
+        sample: &ScrubSample,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        let show_value = self.scrub_options().show_value;
+        paint_highlight(area, sample, default_color(), show_value, window, cx);
+    }
 }
 
 /// Maps a normalized point into pixel space within `area`.

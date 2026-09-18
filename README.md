@@ -31,6 +31,14 @@ you already have coordinates in the `0..=1` range, the raw `GraphBuilder`,
 `AxesBuilder`, and per-plot builders (`PointsPlotBuilder`, `LinePlotBuilder`,
 `BarPlotBuilder`) take them directly.
 
+### Scrubbing
+
+Any plot can be scrubbed with the pointer. Turn it on per plot with
+`ScrubOptions::hover()` or `ScrubOptions::press_and_hold()`, optionally hiding
+the value with `with_show_value(false)`. Give the graph an id so it can keep
+its own state, or pass an `Entity<ScrubState>` via `scrub_state` and observe
+it to display the scrubbed value anywhere in your app.
+
 ## Demo
 
     cargo run --bin demo

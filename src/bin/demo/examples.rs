@@ -2,11 +2,35 @@
 //!
 //! All data is hard-coded so the demo is deterministic.
 
-use gpui::{Hsla, hsla, px};
+use gpui::{Entity, Hsla, hsla, px};
 use gpui_charts::{
     AxesBuilder, BarPlotBuilder, Graph, GraphBuilder, LinePlotBuilder, NumericSeriesBuilder,
-    PlotKind, PointsPlotBuilder, TimeSeriesBuilder, ValueAxis, Weekday, WeekdayBuilder,
+    PlotKind, PointsPlotBuilder, ScrubOptions, ScrubState, TimeSeriesBuilder, ValueAxis, Weekday,
+    WeekdayBuilder,
 };
+
+/// One demo card.
+pub struct Example {
+    /// Card title.
+    pub title: &'static str,
+    /// Short hint shown in the header, e.g. how to scrub.
+    pub note: &'static str,
+    /// Whether the header should echo the shared scrub state's value.
+    pub live: bool,
+    /// The graph to render.
+    pub graph: Graph,
+}
+
+impl Example {
+    fn new(title: &'static str, note: &'static str, graph: Graph) -> Self {
+        Self {
+            title,
+            note,
+            live: false,
+            graph,
+        }
+    }
+}
 
 const DAY: i64 = 86_400;
 const START: i64 = 1_700_000_000;
@@ -23,16 +47,28 @@ fn green() -> Hsla {
     hsla(0.38, 0.6, 0.5, 1.0)
 }
 
-/// Every example, paired with its title, in display order.
-pub fn all() -> Vec<(&'static str, Graph)> {
+/// Every example in display order. `scrub` receives the time series card's
+/// scrub results so the app can show the value outside the graph.
+pub fn all(scrub: &Entity<ScrubState>) -> Vec<Example> {
     vec![
-        ("Scatter (PointsPlot)", scatter()),
-        ("Line (LinePlot)", line()),
-        ("Line + points overlay", line_with_points()),
-        ("Bars (BarPlot)", bars()),
-        ("Time series over a period", time_series()),
-        ("Day of week", weekday()),
-        ("Numeric x axis", numeric()),
+        Example::new("Scatter (PointsPlot)", "no scrubber", scatter()),
+        Example::new("Line (LinePlot)", "no scrubber", line()),
+        Example::new(
+            "Line + points overlay",
+            "hover scrubs the points only, no value",
+            line_with_points(),
+        ),
+        Example::new("Bars (BarPlot)", "press and hold to scrub", bars()),
+        Example {
+            live: true,
+            ..Example::new(
+                "Time series over a period",
+                "hover to scrub",
+                time_series(scrub),
+            )
+        },
+        Example::new("Day of week", "hover to scrub", weekday()),
+        Example::new("Numeric x axis", "no scrubber", numeric()),
     ]
 }
 
@@ -101,12 +137,14 @@ fn line_with_points() -> Graph {
         .points(wave_points())
         .color(blue())
         .radius(px(3.0))
+        .scrub(ScrubOptions::hover().with_show_value(false))
         .build()
         .expect("static points are in range");
     GraphBuilder::new()
         .plot(line)
         .plot(points)
         .axes(percent_axes())
+        .id("overlay")
         .build()
 }
 
@@ -119,6 +157,8 @@ fn bars() -> Graph {
             (0.7, 0.95),
             (0.9, 0.3),
         ])
+        .labels(["40", "75", "55", "95", "30"])
+        .scrub(ScrubOptions::press_and_hold())
         .color(green())
         .build()
         .expect("static bars are in range");
@@ -127,10 +167,10 @@ fn bars() -> Graph {
         .vertical_labels([(0.0, "0"), (0.5, "50"), (1.0, "100")])
         .build()
         .expect("static labels are in range");
-    GraphBuilder::new().plot(bars).axes(axes).build()
+    GraphBuilder::new().plot(bars).axes(axes).id("bars").build()
 }
 
-fn time_series() -> Graph {
+fn time_series(scrub: &Entity<ScrubState>) -> Graph {
     let values = [12.0, 15.5, 14.0, 18.2, 21.0, 19.5, 23.1, 22.0, 25.4, 24.0];
     TimeSeriesBuilder::new()
         .samples(
@@ -144,8 +184,10 @@ fn time_series() -> Graph {
         .plot_kind(PlotKind::Line)
         .plot_kind(PlotKind::Points)
         .color(blue())
+        .scrub(ScrubOptions::hover())
         .build()
         .expect("static samples are valid")
+        .with_scrub_state(scrub.clone())
 }
 
 fn weekday() -> Graph {
@@ -161,8 +203,10 @@ fn weekday() -> Graph {
         ])
         .y_axis(ValueAxis::default().range(0.0, 80.0))
         .color(green())
+        .scrub(ScrubOptions::hover())
         .build()
         .expect("static values are valid")
+        .with_id("weekday")
 }
 
 fn numeric() -> Graph {

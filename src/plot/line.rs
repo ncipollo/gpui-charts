@@ -5,6 +5,8 @@ use gpui::{App, Bounds, Hsla, PathBuilder, Pixels, Window, px};
 use crate::plot::style::default_color;
 use crate::plot::{Plot, map_point};
 use crate::point::NormalizedPoint;
+use crate::scrub::{ScrubOptions, ScrubSample, nearest, paint_highlight};
+use gpui::SharedString;
 
 /// Draws a polyline through its points in the order given.
 ///
@@ -14,6 +16,8 @@ pub struct LinePlot {
     points: Vec<NormalizedPoint>,
     color: Hsla,
     stroke_width: Pixels,
+    labels: Vec<SharedString>,
+    scrub: ScrubOptions,
 }
 
 impl LinePlot {
@@ -23,6 +27,8 @@ impl LinePlot {
             points,
             color: default_color(),
             stroke_width: px(2.0),
+            labels: Vec::new(),
+            scrub: ScrubOptions::default(),
         }
     }
 
@@ -35,6 +41,21 @@ impl LinePlot {
     /// Sets the stroke width.
     pub fn with_stroke_width(mut self, width: Pixels) -> Self {
         self.stroke_width = width;
+        self
+    }
+
+    /// Sets a value label per point, shown when scrubbing.
+    pub fn with_labels(
+        mut self,
+        labels: impl IntoIterator<Item = impl Into<SharedString>>,
+    ) -> Self {
+        self.labels = labels.into_iter().map(Into::into).collect();
+        self
+    }
+
+    /// Sets the scrubber configuration.
+    pub fn with_scrub(mut self, scrub: ScrubOptions) -> Self {
+        self.scrub = scrub;
         self
     }
 
@@ -58,5 +79,23 @@ impl Plot for LinePlot {
         if let Ok(path) = builder.build() {
             window.paint_path(path, self.color);
         }
+    }
+
+    fn scrub_options(&self) -> ScrubOptions {
+        self.scrub
+    }
+
+    fn scrub(&self, x: f32) -> Option<ScrubSample> {
+        nearest(&self.points, &self.labels, x)
+    }
+
+    fn paint_scrub(
+        &self,
+        area: Bounds<Pixels>,
+        sample: &ScrubSample,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        paint_highlight(area, sample, self.color, self.scrub.show_value, window, cx);
     }
 }

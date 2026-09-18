@@ -1,11 +1,12 @@
 //! Choosing which plot types a series renders as.
 
-use gpui::Hsla;
+use gpui::{Hsla, SharedString};
 
 use crate::builder::plot::{BarPlotBuilder, LinePlotBuilder, PointsPlotBuilder};
 use crate::error::ChartError;
 use crate::plot::Plot;
 use crate::point::NormalizedPoint;
+use crate::scrub::ScrubOptions;
 
 /// The kind of plot a series is rendered with.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -24,6 +25,8 @@ pub(crate) struct SeriesStyle {
     pub kinds: Vec<PlotKind>,
     pub color: Option<Hsla>,
     pub bar_width: Option<f32>,
+    pub scrub: ScrubOptions,
+    pub labels: Vec<SharedString>,
 }
 
 impl SeriesStyle {
@@ -52,21 +55,30 @@ impl SeriesStyle {
         let points = points.iter().copied();
         Ok(match kind {
             PlotKind::Points => {
-                let mut b = PointsPlotBuilder::new().points(points);
+                let mut b = PointsPlotBuilder::new()
+                    .points(points)
+                    .labels(self.labels.iter().cloned())
+                    .scrub(self.scrub);
                 if let Some(color) = self.color {
                     b = b.color(color);
                 }
                 Box::new(b.build()?)
             }
             PlotKind::Line => {
-                let mut b = LinePlotBuilder::new().points(points);
+                let mut b = LinePlotBuilder::new()
+                    .points(points)
+                    .labels(self.labels.iter().cloned())
+                    .scrub(self.scrub);
                 if let Some(color) = self.color {
                     b = b.color(color);
                 }
                 Box::new(b.build()?)
             }
             PlotKind::Bar => {
-                let mut b = BarPlotBuilder::new().bars(points);
+                let mut b = BarPlotBuilder::new()
+                    .bars(points)
+                    .labels(self.labels.iter().cloned())
+                    .scrub(self.scrub);
                 if let Some(color) = self.color {
                     b = b.color(color);
                 }

@@ -3,8 +3,9 @@
 use gpui::{App, Bounds, Pixels, Window, fill, point, px, size};
 
 use crate::axes::label::AxisLabel;
-use crate::axes::style::{AxisStyle, TextAnchor, paint_label};
+use crate::axes::style::AxisStyle;
 use crate::plot::map_y;
+use crate::text::{TextAnchor, paint_text};
 
 /// An axis drawn along the left edge of the plot area.
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -63,11 +64,11 @@ impl VerticalAxis {
             );
             window.paint_quad(fill(tick, self.style.line_color));
             let anchor = point(baseline_x - tick_length - px(4.0), y);
-            paint_label(
+            paint_text(
                 &label.text,
                 anchor,
                 TextAnchor::MiddleRight,
-                &self.style,
+                &self.style.label_style(),
                 window,
                 cx,
             );
