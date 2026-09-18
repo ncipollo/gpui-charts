@@ -4,6 +4,7 @@ use gpui::{
     App, AppContext, Application, Bounds, Context, IntoElement, Render, Window, WindowBounds,
     WindowOptions, div, prelude::*, px, size,
 };
+use gpui_charts::{AxesBuilder, GraphBuilder};
 
 const WINDOW_WIDTH: f32 = 1024.0;
 const WINDOW_HEIGHT: f32 = 720.0;
@@ -12,7 +13,8 @@ struct DemoRoot;
 
 impl Render for DemoRoot {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-        div().size_full()
+        let graph = GraphBuilder::new().axes(AxesBuilder::new().build()).build();
+        div().size_full().child(graph)
     }
 }
 
