@@ -1,6 +1,6 @@
 //! The [`Graph`] component: plots plus axes, renderable in any gpui layout.
 
-use gpui::{App, IntoElement, RenderOnce, Window, canvas, prelude::*};
+use gpui::{App, Bounds, IntoElement, Pixels, RenderOnce, Window, canvas, prelude::*};
 
 use crate::axes::Axes;
 use crate::plot::Plot;
@@ -30,10 +30,24 @@ impl Graph {
     pub fn axes(&self) -> &Axes {
         &self.axes
     }
+
+    /// Paints every plot, in order, into `area`.
+    ///
+    /// Axis layout is added in a follow-up; for now the whole element bounds
+    /// are used as the plot area.
+    fn paint(&self, area: Bounds<Pixels>, window: &mut Window, cx: &mut App) {
+        for plot in &self.plots {
+            plot.paint(area, window, cx);
+        }
+    }
 }
 
 impl RenderOnce for Graph {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
-        canvas(|_bounds, _window, _cx| (), |_bounds, (), _window, _cx| {}).size_full()
+        canvas(
+            |_bounds, _window, _cx| (),
+            move |bounds, (), window, cx| self.paint(bounds, window, cx),
+        )
+        .size_full()
     }
 }
