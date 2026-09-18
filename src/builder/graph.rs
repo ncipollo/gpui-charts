@@ -23,6 +23,12 @@ impl GraphBuilder {
         self
     }
 
+    /// Appends an already boxed plot.
+    pub fn plot_boxed(mut self, plot: Box<dyn Plot>) -> Self {
+        self.plots.push(plot);
+        self
+    }
+
     /// Sets the axes drawn around the plot area.
     pub fn axes(mut self, axes: Axes) -> Self {
         self.axes = axes;
