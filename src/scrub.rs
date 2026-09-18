@@ -5,6 +5,8 @@
 //! into [`ScrubResult`]s, paints each plot's highlight, and publishes the
 //! results through a [`ScrubState`] entity so other views can display them.
 
+pub mod search;
+
 use gpui::{
     App, BorderStyle, Bounds, Context, Corners, Edges, Hsla, Pixels, SharedString, Window, fill,
     hsla, point, px, quad, size,
@@ -12,6 +14,7 @@ use gpui::{
 
 use crate::plot::{Plot, map_point, map_x};
 use crate::point::NormalizedPoint;
+use crate::scrub::search::SampleIndex;
 use crate::series::axis::format_value;
 use crate::text::{LabelStyle, TextAnchor, paint_text};
 
@@ -215,21 +218,18 @@ impl ScrubState {
 
 /// Finds the sample whose `x` is nearest to `x`.
 ///
-/// `labels` supplies the text for each index; indices without a label fall
-/// back to the formatted normalized `y`.
-pub fn nearest(points: &[NormalizedPoint], labels: &[SharedString], x: f32) -> Option<ScrubSample> {
-    let x = x.clamp(0.0, 1.0);
-    let (index, point) = points
-        .iter()
-        .enumerate()
-        .min_by(|(_, a), (_, b)| (a.x - x).abs().total_cmp(&(b.x - x).abs()))?;
+/// `samples` is the plot's [`SampleIndex`], which is searched rather than
+/// scanned. `labels` supplies the text for each index; indices without a label
+/// fall back to the formatted normalized `y`.
+pub fn nearest(samples: &SampleIndex, labels: &[SharedString], x: f32) -> Option<ScrubSample> {
+    let (index, point) = samples.nearest(x.clamp(0.0, 1.0))?;
     let label = labels
         .get(index)
         .cloned()
         .unwrap_or_else(|| SharedString::from(format_value(f64::from(point.y))));
     Some(ScrubSample {
         index,
-        point: *point,
+        point,
         label,
     })
 }
@@ -303,6 +303,7 @@ pub fn paint_highlight(
 mod tests {
     use gpui::{App, Bounds, Pixels, SharedString, Window};
 
+    use super::search::SampleIndex;
     use super::{ScrubOptions, ScrubSample, ScrubTrigger, aggregate, nearest};
     use crate::plot::Plot;
     use crate::point::NormalizedPoint;
@@ -315,9 +316,13 @@ mod tests {
         ]
     }
 
+    fn samples() -> SampleIndex {
+        SampleIndex::new(&points())
+    }
+
     #[test]
     fn nearest_picks_closest_x_and_formats_y() {
-        let sample = nearest(&points(), &[], 0.6).expect("non-empty");
+        let sample = nearest(&samples(), &[], 0.6).expect("non-empty");
         assert_eq!(sample.index, 1);
         assert_eq!(sample.label.as_ref(), "0.5");
     }
@@ -325,10 +330,10 @@ mod tests {
     #[test]
     fn nearest_uses_labels_and_clamps() {
         let labels = [SharedString::from("a"), SharedString::from("b")];
-        let sample = nearest(&points(), &labels, 5.0).expect("non-empty");
+        let sample = nearest(&samples(), &labels, 5.0).expect("non-empty");
         assert_eq!(sample.index, 2);
         assert_eq!(sample.label.as_ref(), "0.9");
-        let sample = nearest(&points(), &labels, -1.0).expect("non-empty");
+        let sample = nearest(&samples(), &labels, -1.0).expect("non-empty");
         assert_eq!(sample.label.as_ref(), "a");
     }
 
@@ -347,7 +352,7 @@ mod tests {
 
     #[test]
     fn nearest_of_nothing_is_none() {
-        assert!(nearest(&[], &[], 0.5).is_none());
+        assert!(nearest(&SampleIndex::default(), &[], 0.5).is_none());
     }
 
     #[test]
@@ -368,7 +373,7 @@ mod tests {
         }
 
         fn scrub(&self, x: f32) -> Option<ScrubSample> {
-            nearest(&points(), &[], x)
+            nearest(&samples(), &[], x)
         }
     }
 

@@ -5,6 +5,7 @@ use gpui::{App, Bounds, Hsla, PathBuilder, Pixels, Window, px};
 use crate::plot::style::default_color;
 use crate::plot::{Plot, map_point};
 use crate::point::NormalizedPoint;
+use crate::scrub::search::SampleIndex;
 use crate::scrub::{ScrubOptions, ScrubSample, nearest, paint_highlight};
 use gpui::SharedString;
 
@@ -14,6 +15,7 @@ use gpui::SharedString;
 #[derive(Clone, Debug)]
 pub struct LinePlot {
     points: Vec<NormalizedPoint>,
+    samples: SampleIndex,
     color: Hsla,
     stroke_width: Pixels,
     labels: Vec<SharedString>,
@@ -24,6 +26,7 @@ impl LinePlot {
     /// Creates a line plot with default styling.
     pub fn new(points: Vec<NormalizedPoint>) -> Self {
         Self {
+            samples: SampleIndex::new(&points),
             points,
             color: default_color(),
             stroke_width: px(2.0),
@@ -86,7 +89,7 @@ impl Plot for LinePlot {
     }
 
     fn scrub(&self, x: f32) -> Option<ScrubSample> {
-        nearest(&self.points, &self.labels, x)
+        nearest(&self.samples, &self.labels, x)
     }
 
     fn paint_scrub(
