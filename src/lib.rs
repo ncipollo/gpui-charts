@@ -16,6 +16,7 @@ pub mod error;
 pub mod graph;
 pub mod plot;
 pub mod point;
+pub mod series;
 
 pub use axes::horizontal::HorizontalAxis;
 pub use axes::label::evenly_spaced_labels;
@@ -29,3 +30,6 @@ pub use plot::line::LinePlot;
 pub use plot::points::PointsPlot;
 pub use plot::{Plot, map_point, map_x, map_y};
 pub use point::NormalizedPoint;
+pub use series::{
+    NumericSeriesBuilder, PlotKind, TimeSeriesBuilder, ValueAxis, Weekday, WeekdayBuilder,
+};
