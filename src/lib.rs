@@ -106,7 +106,7 @@ pub use plot::line::LinePlot;
 pub use plot::points::PointsPlot;
 pub use plot::{Plot, map_point, map_x, map_y};
 pub use point::NormalizedPoint;
-pub use scrub::{ScrubOptions, ScrubResult, ScrubSample, ScrubState, ScrubTrigger};
+pub use scrub::{ScrubOptions, ScrubResult, ScrubSample, ScrubState, ScrubStyle, ScrubTrigger};
 pub use series::axis::format_value;
 pub use series::time::format_date;
 pub use series::{

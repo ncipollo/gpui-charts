@@ -25,8 +25,38 @@ pub enum ScrubTrigger {
     PressAndHold,
 }
 
+/// How a scrubbed sample is drawn.
+///
+/// Colors left as `None` fall back to sensible defaults: the plot's own color
+/// for the ring, translucent white for the guide, near-white for the value.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ScrubStyle {
+    /// Whether to draw a vertical guide line through the sample.
+    pub show_guide: bool,
+    /// Color of the guide line.
+    pub guide_color: Option<Hsla>,
+    /// Whether to draw a ring around the sample's point.
+    pub show_point: bool,
+    /// Color of the ring.
+    pub point_color: Option<Hsla>,
+    /// Color of the value text.
+    pub value_color: Option<Hsla>,
+}
+
+impl Default for ScrubStyle {
+    fn default() -> Self {
+        Self {
+            show_guide: true,
+            guide_color: None,
+            show_point: true,
+            point_color: None,
+            value_color: None,
+        }
+    }
+}
+
 /// Per-plot scrubber configuration.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct ScrubOptions {
     /// Whether this plot participates in scrubbing at all.
     pub enabled: bool,
@@ -34,6 +64,8 @@ pub struct ScrubOptions {
     pub trigger: ScrubTrigger,
     /// Whether the sample's value is drawn above the highlighted point.
     pub show_value: bool,
+    /// How the highlight is drawn.
+    pub style: ScrubStyle,
 }
 
 impl Default for ScrubOptions {
@@ -43,6 +75,7 @@ impl Default for ScrubOptions {
             enabled: false,
             trigger: ScrubTrigger::Hover,
             show_value: true,
+            style: ScrubStyle::default(),
         }
     }
 }
@@ -53,7 +86,7 @@ impl ScrubOptions {
         Self {
             enabled: true,
             trigger: ScrubTrigger::Hover,
-            show_value: true,
+            ..Self::default()
         }
     }
 
@@ -62,13 +95,49 @@ impl ScrubOptions {
         Self {
             enabled: true,
             trigger: ScrubTrigger::PressAndHold,
-            show_value: true,
+            ..Self::default()
         }
     }
 
     /// Sets whether the value is drawn above the highlighted point.
     pub fn with_show_value(mut self, show: bool) -> Self {
         self.show_value = show;
+        self
+    }
+
+    /// Sets whether the vertical guide line is drawn.
+    pub fn with_guide(mut self, show: bool) -> Self {
+        self.style.show_guide = show;
+        self
+    }
+
+    /// Sets the guide line color.
+    pub fn with_guide_color(mut self, color: impl Into<Hsla>) -> Self {
+        self.style.guide_color = Some(color.into());
+        self
+    }
+
+    /// Sets whether the ring around the point is drawn.
+    pub fn with_point(mut self, show: bool) -> Self {
+        self.style.show_point = show;
+        self
+    }
+
+    /// Sets the ring color (otherwise the plot's color is used).
+    pub fn with_point_color(mut self, color: impl Into<Hsla>) -> Self {
+        self.style.point_color = Some(color.into());
+        self
+    }
+
+    /// Sets the value text color.
+    pub fn with_value_color(mut self, color: impl Into<Hsla>) -> Self {
+        self.style.value_color = Some(color.into());
+        self
+    }
+
+    /// Replaces the whole highlight style.
+    pub fn with_style(mut self, style: ScrubStyle) -> Self {
+        self.style = style;
         self
     }
 
@@ -180,43 +249,50 @@ pub fn aggregate(plots: &[Box<dyn Plot>], x: f32, pressed: bool) -> Vec<ScrubRes
         .collect()
 }
 
-/// Paints the standard highlight for a scrubbed sample: a guide line, a ring
-/// around the point in `color`, and optionally the label above it.
+/// Paints the standard highlight for a scrubbed sample as configured by
+/// `options`: a guide line, a ring around the point, and the label above it.
+/// `plot_color` is used for the ring when the style sets no color.
 pub fn paint_highlight(
     area: Bounds<Pixels>,
     sample: &ScrubSample,
-    color: Hsla,
-    show_value: bool,
+    plot_color: Hsla,
+    options: &ScrubOptions,
     window: &mut Window,
     cx: &mut App,
 ) {
-    let x = map_x(area, sample.point.x);
-    let guide = Bounds::new(point(x, area.top()), size(px(1.0), area.size.height));
-    window.paint_quad(fill(guide, hsla(0.0, 0.0, 1.0, 0.25)));
+    let style = options.style;
+    if style.show_guide {
+        let x = map_x(area, sample.point.x);
+        let guide = Bounds::new(point(x, area.top()), size(px(1.0), area.size.height));
+        let color = style.guide_color.unwrap_or(hsla(0.0, 0.0, 1.0, 0.25));
+        window.paint_quad(fill(guide, color));
+    }
 
     let center = map_point(area, sample.point);
     let ring_radius = px(7.0);
-    let ring = quad(
-        Bounds::centered_at(center, size(ring_radius * 2.0, ring_radius * 2.0)),
-        Corners::all(ring_radius),
-        hsla(0.0, 0.0, 0.0, 0.0),
-        Edges::all(px(2.0)),
-        color,
-        BorderStyle::Solid,
-    );
-    window.paint_quad(ring);
+    if style.show_point {
+        let ring = quad(
+            Bounds::centered_at(center, size(ring_radius * 2.0, ring_radius * 2.0)),
+            Corners::all(ring_radius),
+            hsla(0.0, 0.0, 0.0, 0.0),
+            Edges::all(px(2.0)),
+            style.point_color.unwrap_or(plot_color),
+            BorderStyle::Solid,
+        );
+        window.paint_quad(ring);
+    }
 
-    if show_value {
+    if options.show_value {
         let anchor = point(center.x, center.y - ring_radius - px(2.0));
-        let style = LabelStyle {
-            color: hsla(0.0, 0.0, 0.95, 1.0),
+        let label_style = LabelStyle {
+            color: style.value_color.unwrap_or(hsla(0.0, 0.0, 0.95, 1.0)),
             ..LabelStyle::default()
         };
         paint_text(
             &sample.label,
             anchor,
             TextAnchor::BottomCenter,
-            &style,
+            &label_style,
             window,
             cx,
         );
@@ -257,6 +333,19 @@ mod tests {
     }
 
     #[test]
+    fn style_setters_override_defaults() {
+        let options = ScrubOptions::hover()
+            .with_guide(false)
+            .with_point_color(gpui::white())
+            .with_value_color(gpui::black());
+        assert!(!options.style.show_guide);
+        assert!(options.style.show_point);
+        assert_eq!(options.style.point_color, Some(gpui::white()));
+        assert_eq!(options.style.value_color, Some(gpui::black()));
+        assert_eq!(ScrubOptions::default().style.point_color, None);
+    }
+
+    #[test]
     fn nearest_of_nothing_is_none() {
         assert!(nearest(&[], &[], 0.5).is_none());
     }
@@ -292,6 +381,7 @@ mod tests {
                 enabled: true,
                 trigger: ScrubTrigger::PressAndHold,
                 show_value: false,
+                ..ScrubOptions::default()
             })),
         ];
         let hovered: Vec<usize> = aggregate(&plots, 0.4, false)

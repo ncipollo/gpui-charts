@@ -2,7 +2,7 @@
 //!
 //! All data is hard-coded so the demo is deterministic.
 
-use gpui::{Entity, Hsla, hsla, px};
+use gpui::{Entity, Hsla, hsla, px, white};
 use gpui_charts::{
     AxesBuilder, BarPlotBuilder, Graph, GraphBuilder, LinePlotBuilder, NumericSeriesBuilder,
     PlotKind, PointsPlotBuilder, ScrubOptions, ScrubState, TimeSeriesBuilder, ValueAxis, Weekday,
@@ -45,6 +45,11 @@ fn orange() -> Hsla {
 
 fn green() -> Hsla {
     hsla(0.38, 0.6, 0.5, 1.0)
+}
+
+/// Hover scrubbing with a white ring so it stands out against every plot color.
+fn hover_scrub() -> ScrubOptions {
+    ScrubOptions::hover().with_point_color(white())
 }
 
 /// Every example in display order. `scrub` receives the time series card's
@@ -137,7 +142,7 @@ fn line_with_points() -> Graph {
         .points(wave_points())
         .color(blue())
         .radius(px(3.0))
-        .scrub(ScrubOptions::hover().with_show_value(false))
+        .scrub(hover_scrub().with_show_value(false))
         .build()
         .expect("static points are in range");
     GraphBuilder::new()
@@ -158,7 +163,7 @@ fn bars() -> Graph {
             (0.9, 0.3),
         ])
         .labels(["40", "75", "55", "95", "30"])
-        .scrub(ScrubOptions::press_and_hold())
+        .scrub(ScrubOptions::press_and_hold().with_point_color(white()))
         .color(green())
         .build()
         .expect("static bars are in range");
@@ -184,7 +189,7 @@ fn time_series(scrub: &Entity<ScrubState>) -> Graph {
         .plot_kind(PlotKind::Line)
         .plot_kind(PlotKind::Points)
         .color(blue())
-        .scrub(ScrubOptions::hover())
+        .scrub(hover_scrub())
         .build()
         .expect("static samples are valid")
         .with_scrub_state(scrub.clone())
@@ -203,7 +208,7 @@ fn weekday() -> Graph {
         ])
         .y_axis(ValueAxis::default().range(0.0, 80.0))
         .color(green())
-        .scrub(ScrubOptions::hover())
+        .scrub(hover_scrub())
         .build()
         .expect("static values are valid")
         .with_id("weekday")

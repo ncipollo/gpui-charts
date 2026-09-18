@@ -95,6 +95,6 @@ impl Plot for PointsPlot {
         window: &mut Window,
         cx: &mut App,
     ) {
-        paint_highlight(area, sample, self.color, self.scrub.show_value, window, cx);
+        paint_highlight(area, sample, self.color, &self.scrub, window, cx);
     }
 }

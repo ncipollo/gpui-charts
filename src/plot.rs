@@ -51,8 +51,8 @@ pub trait Plot {
         window: &mut Window,
         cx: &mut App,
     ) {
-        let show_value = self.scrub_options().show_value;
-        paint_highlight(area, sample, default_color(), show_value, window, cx);
+        let options = self.scrub_options();
+        paint_highlight(area, sample, default_color(), &options, window, cx);
     }
 }
 
