@@ -1,5 +1,7 @@
 //! Builder for [`Graph`].
 
+use gpui::Pixels;
+
 use crate::axes::Axes;
 use crate::graph::Graph;
 use crate::plot::Plot;
@@ -9,6 +11,7 @@ use crate::plot::Plot;
 pub struct GraphBuilder {
     plots: Vec<Box<dyn Plot>>,
     axes: Axes,
+    plot_padding: Option<Pixels>,
 }
 
 impl GraphBuilder {
@@ -35,15 +38,25 @@ impl GraphBuilder {
         self
     }
 
+    /// Sets the inset between the axis baselines and the plot marks.
+    pub fn plot_padding(mut self, padding: Pixels) -> Self {
+        self.plot_padding = Some(padding);
+        self
+    }
+
     /// Finishes building the graph.
     pub fn build(self) -> Graph {
-        Graph::new(self.plots, self.axes)
+        let graph = Graph::new(self.plots, self.axes);
+        match self.plot_padding {
+            Some(padding) => graph.with_plot_padding(padding),
+            None => graph,
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use gpui::{App, Bounds, Pixels, Window};
+    use gpui::{App, Bounds, Pixels, Window, px};
 
     use super::GraphBuilder;
     use crate::plot::Plot;
@@ -57,5 +70,11 @@ mod tests {
     fn collects_plots_in_order() {
         let graph = GraphBuilder::new().plot(NoopPlot).plot(NoopPlot).build();
         assert_eq!(graph.plots().len(), 2);
+    }
+
+    #[test]
+    fn applies_plot_padding() {
+        let graph = GraphBuilder::new().plot_padding(px(0.0)).build();
+        assert_eq!(graph.plot_padding(), px(0.0));
     }
 }

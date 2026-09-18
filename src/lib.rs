@@ -76,7 +76,7 @@ pub use axes::vertical::VerticalAxis;
 pub use axes::{Axes, AxisLabel, AxisStyle};
 pub use builder::{AxesBuilder, BarPlotBuilder, GraphBuilder, LinePlotBuilder, PointsPlotBuilder};
 pub use error::ChartError;
-pub use graph::Graph;
+pub use graph::{DEFAULT_PLOT_PADDING, Graph};
 pub use plot::bar::BarPlot;
 pub use plot::line::LinePlot;
 pub use plot::points::PointsPlot;
