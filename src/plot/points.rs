@@ -5,6 +5,7 @@ use gpui::{App, Bounds, Corners, Hsla, Pixels, Window, fill, px};
 use crate::plot::style::default_color;
 use crate::plot::{Plot, map_point};
 use crate::point::NormalizedPoint;
+use crate::scrub::search::SampleIndex;
 use crate::scrub::{ScrubOptions, ScrubSample, nearest, paint_highlight};
 use gpui::SharedString;
 
@@ -17,6 +18,7 @@ use gpui::SharedString;
 #[derive(Clone, Debug)]
 pub struct PointsPlot {
     points: Vec<NormalizedPoint>,
+    samples: SampleIndex,
     color: Hsla,
     radius: Pixels,
     labels: Vec<SharedString>,
@@ -27,6 +29,7 @@ impl PointsPlot {
     /// Creates a points plot with default styling.
     pub fn new(points: Vec<NormalizedPoint>) -> Self {
         Self {
+            samples: SampleIndex::new(&points),
             points,
             color: default_color(),
             radius: px(4.0),
@@ -85,7 +88,7 @@ impl Plot for PointsPlot {
     }
 
     fn scrub(&self, x: f32) -> Option<ScrubSample> {
-        nearest(&self.points, &self.labels, x)
+        nearest(&self.samples, &self.labels, x)
     }
 
     fn paint_scrub(

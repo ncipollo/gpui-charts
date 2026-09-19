@@ -5,6 +5,7 @@ use gpui::{App, Bounds, Hsla, Pixels, Window, fill, point, size};
 use crate::plot::style::default_color;
 use crate::plot::{Plot, map_x, map_y};
 use crate::point::NormalizedPoint;
+use crate::scrub::search::SampleIndex;
 use crate::scrub::{ScrubOptions, ScrubSample, nearest, paint_highlight};
 use gpui::SharedString;
 
@@ -16,6 +17,7 @@ use gpui::SharedString;
 #[derive(Clone, Debug)]
 pub struct BarPlot {
     bars: Vec<NormalizedPoint>,
+    samples: SampleIndex,
     color: Hsla,
     width: Option<f32>,
     labels: Vec<SharedString>,
@@ -26,6 +28,7 @@ impl BarPlot {
     /// Creates a bar plot with default styling.
     pub fn new(bars: Vec<NormalizedPoint>) -> Self {
         Self {
+            samples: SampleIndex::new(&bars),
             bars,
             color: default_color(),
             width: None,
@@ -85,7 +88,7 @@ impl Plot for BarPlot {
     }
 
     fn scrub(&self, x: f32) -> Option<ScrubSample> {
-        nearest(&self.bars, &self.labels, x)
+        nearest(&self.samples, &self.labels, x)
     }
 
     fn paint_scrub(
