@@ -5,7 +5,7 @@ edition = "2024"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/ncipollo/gpui-charts"
-version = "0.1.0"
+version = "0.1.1"
 
 [dependencies]
 gpui = "0.2.2"
