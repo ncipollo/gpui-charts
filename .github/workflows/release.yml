@@ -1,0 +1,21 @@
+name: release
+on:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: publish release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: publish immutable release
+        uses: ncipollo/release-action@v1.21.0
+        with:
+          generateReleaseNotes: 'true'
+          immutableCreate: 'true'
